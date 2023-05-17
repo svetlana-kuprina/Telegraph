@@ -72,14 +72,14 @@ abstract class Storage
      * @param string $slug
      * @return string $id
      */
-    abstract function create (object $classTelegraphText, string $slug): string;
+    abstract function create (object $findings, string $slug): string;
     /*
      * @param string $slug
      * @param string $id
      *
      * @return object
      */
-    abstract function reade (object $classTelegraphText, string $slug, string $id): object;
+    abstract function reade (object $findings, string $slug, string $id): object;
     /*
     * @param object $telegraphText
     * @param string $slug
@@ -145,34 +145,28 @@ abstract class User
 
 class FileStorage extends Storage
 {
-    public object $classTelegraphText;
-    public function __construct(){
-
-        $this->classTelegraphText = new TelegraphText();
-    }
-
-    public function create(object $classTelegraphText, string $slug): string
+    public function create(object $findings, string $slug): string
     {
         $id=0;
         $numberSlug = 0;
-        $slug = $slug2 = $slug . '-' . date('l jS \of F Y');
+        $slug = $slug2 = $slug . '-' . date('d-m-Y');
 
         while (file_exists($slug))
         {
             $numberSlug++;
             $slug = $slug2 . $numberSlug;
         }
-        $classTelegraphText->slug = $slug;
-        file_put_contents($slug, serialize($classTelegraphText));
+        $findings->slug = $slug;
+        file_put_contents($slug, serialize($findings));
         return $id;
     }
 
-    function reade(object $classTelegraphText, string $slug, string $id): object
+    function reade(object $findings, string $slug, string $id): object
     {
 
 
 
-        return $classTelegraphText;
+        return $findings;
     }
 
     function update(string $slug = '', string $id = ''): void
@@ -194,3 +188,12 @@ class FileStorage extends Storage
 
     }
 }
+$author = 'Автор';
+$slug = 'test_text_file';
+
+$objectTelegraphText = new TelegraphText($author, $slug);
+$objectTelegraphText->text = 'текст';
+$objectTelegraphText->title = 'заголовок';
+
+$objectFileStore = new FileStorage();
+$objectFileStore->create($objectTelegraphText,$slug);
