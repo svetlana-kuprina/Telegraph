@@ -30,7 +30,7 @@ class TelegraphText
             'author' => $this->author,
             'published' => $this->published
         ];
-        file_put_contents($this->slug, serialize($arrStoreText));
+
     }
 
     /*
@@ -72,14 +72,14 @@ abstract class Storage
      * @param string $slug
      * @return string $id
      */
-    abstract function create (object $classTelegraphText,string $slug): string;
+    abstract function create (object $classTelegraphText, string $slug): string;
     /*
      * @param string $slug
      * @param string $id
      *
      * @return object
      */
-    abstract function reade (string $slug = '', string $id = ''): object;
+    abstract function reade (object $classTelegraphText, string $slug, string $id): object;
     /*
     * @param object $telegraphText
     * @param string $slug
@@ -87,7 +87,7 @@ abstract class Storage
     *
     * @return void
     */
-    abstract function update (object $telegraphText, string $slug = '', string $id = ''): void;
+    abstract function update (string $slug = '', string $id = ''): void;
     /*
      * @param string $slug
      * @param string $id
@@ -145,17 +145,37 @@ abstract class User
 
 class FileStorage extends Storage
 {
+    public object $classTelegraphText;
+    public function __construct(){
+
+        $this->classTelegraphText = new TelegraphText();
+    }
+
     public function create(object $classTelegraphText, string $slug): string
     {
-        // TODO: Implement create() method.
+        $id=0;
+        $numberSlug = 0;
+        $slug = $slug2 = $slug . '-' . date('l jS \of F Y');
+
+        while (file_exists($slug))
+        {
+            $numberSlug++;
+            $slug = $slug2 . $numberSlug;
+        }
+        $classTelegraphText->slug = $slug;
+        file_put_contents($slug, serialize($classTelegraphText));
+        return $id;
     }
 
-    function reade(string $slug = '', string $id = ''): object
+    function reade(object $classTelegraphText, string $slug, string $id): object
     {
-        // TODO: Implement reade() method.
+
+
+
+        return $classTelegraphText;
     }
 
-    function update(object $telegraphText, string $slug = '', string $id = ''): void
+    function update(string $slug = '', string $id = ''): void
     {
         // TODO: Implement update() method.
     }
@@ -167,6 +187,10 @@ class FileStorage extends Storage
 
     function list(): array
     {
-        // TODO: Implement list() method.
+        $arrayTelegraph = [];
+
+
+        return $arrayTelegraph;
+
     }
 }
