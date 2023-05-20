@@ -5,13 +5,11 @@ class TelegraphText
 {
     public string $text, $title, $author, $published, $slug;
 
-    /*
+
+    /**
      * @param string $author
      * @param string $slug
-     *
-     * @return void
      */
-    //
     public function __construct(string $author, string $slug)
     {
         $this->published = date('l jS \of F Y h:i:s A');
@@ -19,7 +17,8 @@ class TelegraphText
         $this->slug = $slug;
     }
 
-    /*
+
+    /**
      * @return void
      */
     public function storeText(): void
@@ -33,7 +32,8 @@ class TelegraphText
 
     }
 
-    /*
+
+    /**
      * @return string
      */
     public function loadText(): string {
@@ -49,10 +49,10 @@ class TelegraphText
         return $this->text;
     }
 
-    /*
+
+    /**
      * @param string $title
      * @param string $text
-     *
      * @return void
      */
     public function editText(string $title, string $text): void
@@ -67,62 +67,64 @@ class TelegraphText
 
 abstract class Storage
 {
-    /*
-     * @param object $telegraphText
+
+    /**
+     * @param object $findings
      * @param string $slug
-     * @return string $id
+     * @return string
      */
     abstract function create (object $findings, string $slug): string;
-    /*
+
+    /**
+     * @param object $findings
      * @param string $slug
-     * @param string $id
-     *
-     * @return object
+     * @return mixed
      */
-    abstract function reade (object $findings, string $slug, string $id): object;
-    /*
-    * @param object $telegraphText
-    * @param string $slug
-    * @param string $id
-    *
-    * @return void
-    */
-    abstract function update (string $slug = '', string $id = ''): void;
-    /*
+    abstract function reade (string $slug): object;
+
+
+    /**
+     * @param object $inputClass
      * @param string $slug
      * @param string $id
-     *
      * @return void
      */
-    abstract function delete (string $slug = '', string $id = ''): void;
-    /*
-      * @return array
-      */
+    abstract function update (object $inputClass, string $slug): void;
+
+    /**
+     * @param string $slug
+     * @return void
+     */
+    abstract function delete (string $slug): void;
+
+    /**
+     * @return array
+     */
     abstract function list(): array;
 }
 
 abstract class View
 {
-    /*
-     * object $storage
-     */
     public $storage;
 
+    /**
+     * @param string $storage
+     */
     public function __construct(string $storage)
     {
         $this->storage = $storage;
     }
-    /*
-       * @param string $id
-       *
-       * @return void
-       */
+
+    /**
+     * @param int $id
+     * @return void
+     */
     abstract function displayTextById(int $id): void;
-    /*
-       * @param string $url
-       *
-       * @return void
-       */
+
+    /**
+     * @param string $url
+     * @return void
+     */
     abstract function displayTextByUrl(string $url): void;
 }
 
@@ -145,6 +147,11 @@ abstract class User
 
 class FileStorage extends Storage
 {
+    /**
+     * @param object $findings
+     * @param string $slug
+     * @return string
+     */
     public function create(object $findings, string $slug): string
     {
         $id=0;
@@ -154,37 +161,84 @@ class FileStorage extends Storage
         while (file_exists($slug))
         {
             $numberSlug++;
-            $slug = $slug2 . $numberSlug;
+            $slug = $slug2 . '-'.$numberSlug;
         }
         $findings->slug = $slug;
         file_put_contents($slug, serialize($findings));
-        return $id;
+        return $slug;
     }
 
-    function reade(object $findings, string $slug, string $id): object
+    /**
+     * @param object $findings
+     * @param string $slug
+     * @return object
+     */
+    function reade(string $slug): object
     {
+        $inputClass = (object)[];
 
-
-
-        return $findings;
+        if (strpos($slug,'test_text_file') !== false &&
+            file_exists($slug) &&
+            filesize($slug) > 0)
+        {
+            $inputClass = unserialize(file_get_contents($slug));
+            return $inputClass;
+        }
+        return $inputClass;
     }
 
-    function update(string $slug = '', string $id = ''): void
+    /**
+     * @param object $inputClass
+     * @param string $slug
+     * @return void
+     */
+    function update(object $inputClass, string $slug): void
     {
-        // TODO: Implement update() method.
+        if (strpos($slug,'test_text_file') !== false &&
+            file_exists($slug) )
+        {
+            file_put_contents($slug, serialize($inputClass));
+        }
     }
 
-    function delete(string $slug = '', string $id = ''): void
+    /**
+     * @param string $slug
+     * @return void
+     */
+    function delete(string $slug): void
     {
-        // TODO: Implement delete() method.
+        if (strpos($slug,'test_text_file') !== false &&
+            file_exists($slug) )
+        {
+            unlink($slug);
+        }
     }
 
+    /**
+     * @return array
+     */
     function list(): array
     {
-        $arrayTelegraph = [];
+        $arrayList = [];
+        $indexArrayClass = 0;
+        $arrayScanDir = scandir('./');
+        $countArrayScanDir = count($arrayScanDir);
+
+        for ($i = 0; $i < $countArrayScanDir; $i++)
+        {
+            $fileName = './' . $arrayScanDir[$i];
 
 
-        return $arrayTelegraph;
+            if (
+                strpos($fileName,'test_text_file') &&
+                filesize($fileName) > 0
+            ) {
+                $arrayList[$indexArrayClass] = (array) unserialize(file_get_contents($fileName));
+                $indexArrayClass++;
+            }
+        }
+
+        return $arrayList;
 
     }
 }
@@ -196,4 +250,10 @@ $objectTelegraphText->text = 'текст';
 $objectTelegraphText->title = 'заголовок';
 
 $objectFileStore = new FileStorage();
-$objectFileStore->create($objectTelegraphText,$slug);
+$slug=$objectFileStore->create($objectTelegraphText,$slug);
+print_r($objectFileStore->reade($slug));
+
+$objectTelegraphText->text = 'Update text';
+$objectTelegraphText->title = 'Update title';
+$objectFileStore->update($objectTelegraphText,$slug);
+print_r($objectFileStore->list());

@@ -1,0 +1,47 @@
+class FileStorage extends store
+{
+    public string $object;
+    public string $slug;
+    function create(string $object,string $slug): void
+    {
+        $this->object = $object;
+        $this->slug = $slug;
+        $nameFile = $nameFile2 = $this->slug . date('l jS \of F Y');
+        $i = 0;
+        while (file_exists($nameFile))
+        {
+            $i++;
+            $nameFile = $nameFile2 . '-'.$i;
+        }
+        file_put_contents($nameFile, $this->object);
+       }
+
+    function reade (){
+    }
+    function update (){
+
+    }
+    function delete (){
+
+    }
+    function list(){
+
+    }
+}
+
+$author = 'Автор';
+$slug = 'test_text_file';
+
+$proba = new TelegraphText($author, $slug);
+$proba->text = 'текст';
+$proba->title = 'заголовок';
+
+$proba->editText('title2','text2');
+$proba->storeText();
+print_r($proba->loadText());
+
+print_r($proba); //вывод на экран обьекта класса TelegraphText.
+$proba2 = new FileStorage;
+$object = serialize(new TelegraphText($author, $slug));
+$proba2->create($object, $slug);
+print_r($proba2);
