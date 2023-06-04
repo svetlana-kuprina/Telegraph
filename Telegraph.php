@@ -378,6 +378,10 @@ class FileStorage extends Storage
         $arrayEvent = ['nameMeted' => $nameMeted, 'callBackFunction' => $callBackFunction];
     }
 
+    /**
+     * @param string $nameMeted
+     * @return void
+     */
     public function detouchEvent(string $nameMeted): void
     {
         global $arrayEvent;
