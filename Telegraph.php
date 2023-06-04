@@ -1,73 +1,62 @@
 <?php
-
-//Module-8
-class TelegraphText
+interface  LoggerInterface
 {
-    public string $text, $title, $author, $published, $slug;
-
-
     /**
-     * @param string $author
-     * @param string $slug
-     */
-    public function __construct(string $author, string $slug)
-    {
-        $this->published = date('l jS \of F Y h:i:s A');
-        $this->author = $author;
-        $this->slug = $slug;
-    }
-
-
-    /**
+     * @param string $textError
      * @return void
      */
-    public function storeText(): void
-    {
-        $arrStoreText = [
-            'text' =>  $this->text,
-            'title' => $this->title,
-            'author' => $this->author,
-            'published' => $this->published
-        ];
-
-    }
-
+    public function logMessage(string $textError): void;
 
     /**
-     * @return string
+     * @param int $numbMessages
+     * @return array
      */
-    public function loadText(): string {
-        if (!file_exists($this->slug) || filesize($this->slug) <= 0)
-        {
-            return '';
-        }
-        $arrLoadText = unserialize(file_get_contents($this->slug));
-        $this->text = $arrLoadText['text'];
-        $this->title = $arrLoadText['title'];
-        $this->author = $arrLoadText['author'];
-        $this->published = $arrLoadText['published'];
-        return $this->text;
-    }
-
-
+    public function lastMessages(int $numbMessages): array;
+}
+interface EventListenerInterface
+{
     /**
-     * @param string $title
-     * @param string $text
+     * @param string $nameMeted
+     * @param string $callBackFunction
      * @return void
      */
-    public function editText(string $title, string $text): void
-    {
-        $this->text = $text;
-        $this->title = $title;
-    }
+    public function attachEvent(string $nameMeted,string $callBackFunction): void;
+
+    /**
+     * @param string $nameMeted
+     * @return void
+     */
+    public function detouchEvent(string $nameMeted): void;
+
 }
 
 
-//Module-9
-
-abstract class Storage
+abstract class Storage implements LoggerInterface,EventListenerInterface
 {
+    /**
+     * @param string $textError
+     * @return void
+     */
+    abstract function logMessage(string $textError):void;
 
+    /**
+     * @param int $numbMessages
+     * @return mixed
+     */
+    abstract function lastMessages(int $numbMessages):array;
+
+    /**
+     * @param string $nameMeted
+     * @param string $callBackFunction
+     * @return void
+     */
+    abstract function attachEvent(string $nameMeted,string $callBackFunction): void;
+
+    /**
+     * @param string $nameMeted
+     * @return void
+     */
+    abstract function detouchEvent(string $nameMeted): void;
     /**
      * @param object $findings
      * @param string $slug
@@ -128,7 +117,7 @@ abstract class View
     abstract function displayTextByUrl(string $url): void;
 }
 
-abstract class User
+abstract class User implements EventListenerInterface
 {
     /*
     * string $id
@@ -143,6 +132,81 @@ abstract class User
      * @return array
      */
     abstract function getTextsToEdit(): array;
+
+    /**
+     * @param string $nameMeted
+     * @param string $callBackFunction
+     * @return void
+     */
+    abstract function attachEvent(string $nameMeted, string $callBackFunction):void;
+
+    /**
+     * @param string $nameMeted
+     * @return void
+     */
+    abstract function detouchEvent(string $nameMeted): void;
+}
+
+
+class TelegraphText
+{
+    public string $text, $title, $author, $published, $slug;
+
+
+    /**
+     * @param string $author
+     * @param string $slug
+     */
+    public function __construct(string $author, string $slug)
+    {
+        $this->published = date('l jS \of F Y h:i:s A');
+        $this->author = $author;
+        $this->slug = $slug;
+    }
+
+
+    /**
+     * @return void
+     */
+    public function storeText(): void
+    {
+        $arrStoreText = [
+            'text' =>  $this->text,
+            'title' => $this->title,
+            'author' => $this->author,
+            'published' => $this->published
+        ];
+
+    }
+
+
+    /**
+     * @return string
+     */
+    public function loadText(): string {
+        if (!file_exists($this->slug) || filesize($this->slug) <= 0)
+        {
+            return '';
+        }
+        $arrLoadText = unserialize(file_get_contents($this->slug));
+        $this->text = $arrLoadText['text'];
+        $this->title = $arrLoadText['title'];
+        $this->author = $arrLoadText['author'];
+        $this->published = $arrLoadText['published'];
+        return $this->text;
+    }
+
+
+    /**
+     * @param string $title
+     * @param string $text
+     * @return void
+     */
+    public function editText(string $title, string $text): void
+    {
+        $this->text = $text;
+        $this->title = $title;
+    }
 }
 
 class FileStorage extends Storage
@@ -241,7 +305,89 @@ class FileStorage extends Storage
         return $arrayList;
 
     }
+
+    /**
+     * @param string $textError
+     * @return void
+     */
+    public function logMessage(string $textError): void
+    {
+        $numberSlug = 0;
+        $slugStart = './log_text_file/log_text_file';
+        $slug = $slugNumber = $slugStart . '_' . date('d-m-Y');
+
+        while (file_exists($slug))
+        {
+            $numberSlug++;
+            $slug = $slugNumber . '_' . "$numberSlug";
+        }
+
+        file_put_contents($slug, $textError);
+    }
+
+    /**
+     * @param int $numbMessages
+     * @return array
+     */
+    public function lastMessages(int $numbMessages): array
+    {
+        $arrayMessages = [];
+
+        $indexArrayMessages = 0;
+        $arrayScanDir = scandir('./log_text_file/');
+        $countArrayScanDir = count($arrayScanDir);
+
+        if (
+            $countArrayScanDir < $$numbMessages
+        )
+        {
+            echo 'Столько логов не будет. Всего логов - ' . $countArrayScanDir .
+                ' Уменьшите запрашиваемое количество' . PHP_EOL;
+            return $arrayMessages;
+        }
+
+        $iStart = $countArrayScanDir - $$numbMessages;
+
+        for ($i = $iStart; $i < $countArrayScanDir; $i++)
+        {
+            $fileName = './log_text_file/' . $arrayScanDir[$i];
+
+            if (
+                strpos($fileName, 'log_text_file', 15) === 16 &&
+                filesize($fileName) > 0
+            )
+            {
+                $arrayMessages[$indexArrayMessages] = file_get_contents($fileName);
+                $indexArrayMessages++;
+            }
+
+        }
+
+        return $arrayMessages;
+    }
+
+    /**
+     * @param string $nameMeted
+     * @param string $callBackFunction
+     * @return void
+     */
+    public function attachEvent(string $nameMeted, string $callBackFunction): void
+    {
+        global $arrayEvent;
+
+        $arrayEvent = ['nameMeted' => $nameMeted, 'callBackFunction' => $callBackFunction];
+    }
+
+    public function detouchEvent(string $nameMeted): void
+    {
+        global $arrayEvent;
+
+        unset($arrayEvent[array_search($nameMeted,array_column($arrayEvent,'nameMeted'))]);
+        $arrayEvent = array_values($arrayEvent);
+    }
 }
+
+
 $author = 'Автор';
 $slug = 'test_text_file';
 
