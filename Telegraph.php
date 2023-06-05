@@ -150,13 +150,25 @@ abstract class User implements EventListenerInterface
 
 class TelegraphText
 {
-    public string $text, $title, $author, $published, $slug;
+    private string $text, $title, $author, $published, $slug;
 
 
     /**
      * @param string $author
      * @param string $slug
      */
+
+    public function setAuthor(string $author)
+    {
+        if (count($author)<120){
+            $this->author=$author;
+        }
+        else{
+            echo 'Ошибка! Имя автора привышает 120 символов. Придумайте имя покороче.';
+        }
+
+    }
+
     public function __construct(string $author, string $slug)
     {
         $this->published = date('l jS \of F Y h:i:s A');
@@ -184,8 +196,7 @@ class TelegraphText
      * @return string
      */
     public function loadText(): string {
-        if (!file_exists($this->slug) || filesize($this->slug) <= 0)
-        {
+        if (!file_exists($this->slug) || filesize($this->slug) <= 0){
             return '';
         }
         $arrLoadText = unserialize(file_get_contents($this->slug));
@@ -243,8 +254,7 @@ class FileStorage extends Storage
 
         if (strpos($slug,'test_text_file') !== false &&
             file_exists($slug) &&
-            filesize($slug) > 0)
-        {
+            filesize($slug) > 0){
             $inputClass = unserialize(file_get_contents($slug));
             return $inputClass;
         }
@@ -259,8 +269,7 @@ class FileStorage extends Storage
     function update(object $inputClass, string $slug): void
     {
         if (strpos($slug,'test_text_file') !== false &&
-            file_exists($slug) )
-        {
+            file_exists($slug) ){
             file_put_contents($slug, serialize($inputClass));
         }
     }
@@ -272,8 +281,7 @@ class FileStorage extends Storage
     function delete(string $slug): void
     {
         if (strpos($slug,'test_text_file') !== false &&
-            file_exists($slug) )
-        {
+            file_exists($slug) ){
             unlink($slug);
         }
     }
@@ -295,8 +303,7 @@ class FileStorage extends Storage
 
             if (
                 strpos($fileName,'test_text_file') &&
-                filesize($fileName) > 0
-            ) {
+                filesize($fileName) > 0) {
                 $arrayList[$indexArrayClass] = (array) unserialize(file_get_contents($fileName));
                 $indexArrayClass++;
             }
@@ -338,9 +345,7 @@ class FileStorage extends Storage
         $countArrayScanDir = count($arrayScanDir);
 
         if (
-            $countArrayScanDir < $$numbMessages
-        )
-        {
+            $countArrayScanDir < $$numbMessages){
             echo 'Столько логов не будет. Всего логов - ' . $countArrayScanDir .
                 ' Уменьшите запрашиваемое количество' . PHP_EOL;
             return $arrayMessages;
@@ -355,8 +360,7 @@ class FileStorage extends Storage
             if (
                 strpos($fileName, 'log_text_file', 15) === 16 &&
                 filesize($fileName) > 0
-            )
-            {
+            ){
                 $arrayMessages[$indexArrayMessages] = file_get_contents($fileName);
                 $indexArrayMessages++;
             }
